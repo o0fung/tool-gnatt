@@ -1,5 +1,0 @@
-Área;ID da tarefa;Dependências;Grupo tarefas;Tarefa;Tamanho;Dias Úteis;Devs dedicados;Horas;Início;Fim
-Time 1;1;-;Grupo 1;Tarefa 1;XL;60;1;480;03/02/2025;28/04/2025
-Time 1;2;-;Grupo 1;Tarefa 2;L;30;1;240;03/02/2025;17/03/2025
-Time 2;3;2;Grupo 2;Tarefa 3;L;30;2;120;18/03/2025;08/04/2025
-Time 2;4;2|3;Grupo 3;Tarefa 4;S;5;1;40;09/01/2026;16/01/2026
