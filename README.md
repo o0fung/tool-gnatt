@@ -1,1 +1,1 @@
-# gantt-plotter-from-file
+# gantt-plotter
