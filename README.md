@@ -37,7 +37,7 @@ python main.py
 Modify `config/settings.py` to customize:
 ```python
 # Chart appearance
-TITLE = "Project Synergy Horizon"  # Chart title
+TITLE = "Super Cool Project"  # Chart title
 BAR_COLOR = "#30C7DC"  # Default bar color
 TEAM_BAR_COLORS = {  # Team-specific colors
     "Technology": "#56778f",
