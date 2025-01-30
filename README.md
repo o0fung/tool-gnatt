@@ -1,17 +1,17 @@
 # gantt-plotter
 This project generates a Gantt chart from an Excel file.
 
-1. Clone o repositório:
+1. Clone the repository:
    ```bash
    git clone https://github.com/anacds/gantt-plotter.git
    cd gantt-plotter
 
-2. Crie um ambiente virtual
+2. Create a virtual environment
    ```bash
    python -m venv venv
    source venv/bin/activate
 
-3. Instale as dependências
+3. Install the dependencies
    ```bash
    pip install -r requirements.txt
 
