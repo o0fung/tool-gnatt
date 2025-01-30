@@ -1,63 +1,79 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.patches as mpatches
+import mplcursors
 from matplotlib import rcParams
+
 from config.settings import (
-    TITLE, X_LABEL, Y_LABEL, BAR_COLOR, FONT_FAMILY, FONT_SANS_SERIF,
-    TITLE_SIZE, LABEL_SIZE, DAY_FONT_SIZE, MONTH_FONT_SIZE, MONTH_FONT_WEIGHT,
-    Y_LABEL_FONT_SIZE
+    TITLE, TITLE_SIZE, TITLE_FONT_WEIGHT,
+    FONT_FAMILY, FONT_SANS_SERIF, FONT_COLOR,
+    LABEL_SIZE, Y_LABEL_FONT_SIZE, DAY_FONT_SIZE, MONTH_FONT_SIZE, MONTH_FONT_WEIGHT,
+    X_LABEL, Y_LABEL, 
+    BAR_COLOR, TEAM_BAR_COLORS,
+    DATE_FORMAT
 )
 
+# style confs
 rcParams['font.family'] = FONT_FAMILY
 rcParams['font.sans-serif'] = FONT_SANS_SERIF
 rcParams['axes.titlesize'] = TITLE_SIZE
 rcParams['axes.labelsize'] = LABEL_SIZE
 
-def load_tasks(file_path):
-    tasks = pd.read_csv(file_path, encoding='latin1', delimiter=';')
-    tasks.columns = [
-        'Área', 'ID da tarefa', 'Dependências', 'Grupo tarefas', 'Tarefa',
-        'Tamanho', 'Dias úteis', 'Devs dedicados', 'Horas', 'Início', 'Fim'
-    ]
-    tasks['Início'] = pd.to_datetime(tasks['Início'], format='%d/%m/%Y')
-    tasks['Fim'] = pd.to_datetime(tasks['Fim'], format='%d/%m/%Y')
-    tasks = tasks.set_index(pd.DatetimeIndex(tasks['Início'].values))
-    tasks.sort_index(inplace=True)
-    return tasks
+def load_tasks(file_path, sheet_name, header, nrows, skiprows):
+    """
+    This function loads data from an Excel spreadsheet into a Pandas dataframe.
+    """
+    try:
+        tasks = pd.read_excel(file_path, sheet_name=sheet_name, header=header, 
+                              nrows=nrows, skiprows=skiprows)
+        tasks.columns = [
+            'task_id', 'team', 'dependencies', 'task_group', 'task_description',
+            'start_date', 'end_date'
+        ]
+        tasks['start_date'] = pd.to_datetime(tasks['start_date'], format=DATE_FORMAT)
+        tasks['end_date'] = pd.to_datetime(tasks['end_date'], format=DATE_FORMAT)
+        tasks.set_index(pd.DatetimeIndex(tasks['start_date'].values), inplace=True)
+        return tasks
+    except Exception as e:
+        print(f"Error when trying to load tasks: {e}")
 
 def group_tasks_by_group(tasks):
-    grouped = tasks.groupby('Grupo tarefas').agg({
-        'Início': 'min',
-        'Fim': 'max'
-    }).reset_index()
+    grouped = tasks.groupby(by=['team', 'task_group']).agg({
+        'start_date': 'min',
+        'end_date': 'max'
+    }).reset_index().sort_values(by=['start_date', 'task_group'], ascending=False)
     return grouped
 
-def plot_gantt(tasks, output_path=None):
-    start_date = tasks['Início'].min()
-    end_date = tasks['Fim'].max()
-    timeline_length = (end_date - start_date).days
+def plot_gantt(tasks, output_path):
+    """
+    """
+    if tasks.empty:
+        print("No tasks to plot.")
+        return
+    
+    tasks.sort_values(by=['start_date', 'task_group'], ascending=False, inplace=True)
+    start_date = tasks['start_date'].min()
+    end_date = tasks['end_date'].max()
 
-    #base_width = 5
-    #width_per_week = 0.1
-    #figure_width = base_width + ((timeline_length / 7) * width_per_week)
-    #figure_height = max(7, len(tasks) * 0.5)
-    #plt.figure(figsize=(figure_width, figure_height))
-    plt.figure()
-
-    y_positions = range(len(tasks))
-    group_labels = tasks['Grupo tarefas'].tolist()
-
-    tasks = tasks.sort_values(by='Início', ascending=True)
-
+    bars = []
     for task in tasks.itertuples():
-        plt.barh(
-            task._1,
-            (task.Fim - task.Início).days,
-            left=task.Início,
-            color=BAR_COLOR
+        bar = plt.barh(
+                task.task_group,
+                (task.end_date - task.start_date).days,
+                left=task.start_date,
+                color=TEAM_BAR_COLORS.get(task.team, "#000000")
         )
+        
+        for rect in bar:
+            rect.annotation = (
+                f"{start_date.strftime('%d/%b/%y')} - {end_date.strftime('%d/%b/%y')}\n"
+                f"Duration: {(task.end_date - task.start_date).days}\n"
+                f"Task group: {task.task_group}\n"
+                f"Team: {task.team}"
+            )
+            bars.append(rect)
 
-    ax = plt.gca()
     all_dates = pd.date_range(start=start_date, end=end_date, freq='D')
     week_labels = []
     week_positions = []
@@ -67,9 +83,15 @@ def plot_gantt(tasks, output_path=None):
             week_labels.append(date.strftime('%d'))
             week_positions.append(date)
 
+    ax = plt.gca()
+    ax.set_title(TITLE, fontsize=TITLE_SIZE, color=FONT_COLOR).set_fontweight(TITLE_FONT_WEIGHT)
+    ax.set_xlabel(X_LABEL, fontsize=LABEL_SIZE, color=FONT_COLOR)
+    ax.set_ylabel(Y_LABEL, fontsize=LABEL_SIZE, color=FONT_COLOR)
+    ax.tick_params(axis='x', colors=FONT_COLOR)
+    ax.tick_params(axis='y', colors=FONT_COLOR)
     ax.set_xticks(week_positions)
-    ax.set_xticklabels(week_labels, fontsize=DAY_FONT_SIZE)
-    ax.tick_params(axis='y', labelsize=Y_LABEL_FONT_SIZE)
+    ax.set_xticklabels(week_labels, fontsize=DAY_FONT_SIZE, color=FONT_COLOR)
+    ax.set_yticklabels("", fontsize=Y_LABEL_FONT_SIZE, color=FONT_COLOR)
 
     sec_ax = ax.secondary_xaxis('bottom')
     sec_ax.xaxis.set_major_formatter(mdates.DateFormatter('%b/%y'))
@@ -79,6 +101,7 @@ def plot_gantt(tasks, output_path=None):
     for label in sec_ax.get_xticklabels():
         label.set_fontsize(MONTH_FONT_SIZE)
         label.set_weight(MONTH_FONT_WEIGHT)
+        label.set_color(FONT_COLOR)
 
     ax.grid(axis='x', linestyle='--', alpha=0.6)
     ax.spines['top'].set_visible(False)
@@ -86,10 +109,24 @@ def plot_gantt(tasks, output_path=None):
     sec_ax.spines['top'].set_visible(False)
     sec_ax.spines['right'].set_visible(False)
 
-    plt.xlabel(X_LABEL, labelpad=10)
-    #sec_ax.set_xlabel('Mês/Ano', labelpad=10)
-    plt.ylabel(Y_LABEL, labelpad=10)
-    plt.title(TITLE, pad=15)
+    cursor = mplcursors.cursor(bars, hover=True)
+    @cursor.connect("add")
+    def on_add(sel):
+        task_annotation = sel.artist.annotation
+        sel.annotation.set_text(task_annotation)
+        sel.annotation.get_bbox_patch().set_facecolor("white")
+        sel.annotation.get_bbox_patch().set_alpha(0.8)
+        sel.annotation.set_fontsize(10)
+    
+    legend_patches = []
+    for team, color in TEAM_BAR_COLORS.items():
+        patch = mpatches.Patch(color=color, label=team)
+        legend_patches.append(patch)
+
+    ax.legend(
+        handles=legend_patches,
+        loc='best'
+    )
 
     plt.tight_layout()
     if output_path:
