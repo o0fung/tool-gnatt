@@ -1,4 +1,5 @@
 import pandas as pd
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.patches as mpatches
@@ -41,9 +42,12 @@ def load_tasks(file_path, sheet_name, header, nrows, skiprows):
         tasks['start_date'] = pd.to_datetime(tasks['start_date'], format=DATE_FORMAT)
         tasks['end_date'] = pd.to_datetime(tasks['end_date'], format=DATE_FORMAT)
         tasks.set_index(pd.DatetimeIndex(tasks['start_date'].values), inplace=True)
+        
         return tasks
+    
     except Exception as e:
         print(f"Error when trying to load tasks: {e}")
+        raise
 
 def group_tasks_by_group(tasks):
     """
@@ -96,6 +100,14 @@ def plot_gantt(tasks, output_path=None):
                 f"Team: {task.team}"
             )
             bars.append(rect)
+        
+    # annotations when hovering bars
+    cursor = mplcursors.cursor(bars, hover=mplcursors.HoverMode.Transient)
+    @cursor.connect("add")
+    def on_hover(sel):
+        sel.annotation.set_text(sel.artist.annotation)
+        sel.annotation.get_bbox_patch().set(facecolor="white", alpha=0.8)
+        sel.annotation.set_fontsize(10)
 
     week_positions, week_labels = build_week_ticks(start_date, end_date)
 
@@ -122,14 +134,6 @@ def plot_gantt(tasks, output_path=None):
     for spine in ['top', 'right']:
         ax.spines[spine].set_visible(False)
         sec_ax.spines[spine].set_visible(False)
-
-    # annotations when hovering bars
-    cursor = mplcursors.cursor(bars, hover=True)
-    @cursor.connect("add")
-    def on_hover(sel):
-        sel.annotation.set_text(sel.artist.annotation)
-        sel.annotation.get_bbox_patch().set(facecolor="white", alpha=0.8)
-        sel.annotation.set_fontsize(10)
 
     # legend
     handles = []
