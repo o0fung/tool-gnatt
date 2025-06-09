@@ -22,7 +22,7 @@ rcParams['font.sans-serif'] = FONT_SANS_SERIF
 rcParams['axes.titlesize'] = TITLE_SIZE
 rcParams['axes.labelsize'] = LABEL_SIZE
 
-def load_tasks(file_path, sheet_name, header, nrows, skiprows):
+def load_tasks(file_path, sheet_name, header=0, nrows=52, skiprows=None):
     """
     Loads data from an Excel spreadsheet into a Pandas dataframe.
     """

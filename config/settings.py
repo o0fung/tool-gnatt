@@ -2,7 +2,7 @@
 DATE_FORMAT = '%Y-%m-%d'
 
 # chart 
-TITLE = "Super Cool Project"
+TITLE = "Gnatt Chart"
 TITLE_SIZE = 12
 TITLE_FONT_WEIGHT = "bold"
 

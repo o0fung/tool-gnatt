@@ -3,7 +3,7 @@ This gnatt plotter project generates a Gantt chart from an Excel file.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/anacds/gantt-plotter.git
+   git clone https://github.com/o0fung/tool-gnatt.git
    cd gantt-plotter
 
 2. Create a virtual environment
