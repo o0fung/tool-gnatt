@@ -1,5 +1,5 @@
-# gantt-plotter
-This project generates a Gantt chart from an Excel file.
+# Tool-Gantt
+This gnatt plotter project generates a Gantt chart from an Excel file.
 
 1. Clone the repository:
    ```bash
